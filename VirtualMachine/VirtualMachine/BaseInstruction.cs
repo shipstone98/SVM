@@ -17,7 +17,7 @@
         #endregion
 
         #region Fields
-        private SvmVirtualMachine virtualMachine = null;
+        private IVirtualMachine virtualMachine = null;
         #endregion
 
         #region Constructors
@@ -65,7 +65,7 @@
         #region IInstruction Members
         public abstract void Run();
 
-        public SvmVirtualMachine VirtualMachine
+        public IVirtualMachine VirtualMachine
         {
             get
             {

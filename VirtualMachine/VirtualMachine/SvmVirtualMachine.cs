@@ -29,6 +29,7 @@ namespace SVM
         #endregion
 
         #region Fields
+        private readonly Queue<int> Breakpoints;
         private IDebugger debugger = null;
         private List<IInstruction> program = new List<IInstruction>();
         private Stack stack = new Stack();
@@ -40,6 +41,8 @@ namespace SVM
         public SvmVirtualMachine()
         {
             #region Task 5 - Debugging 
+            this.Breakpoints = new Queue<int>();
+
             // Do something here to find and create an instance of a type which implements 
             // the IDebugger interface, and assign it to the debugger field
             this.LoadDebugger();
@@ -209,12 +212,37 @@ namespace SVM
             #region TASKS 5 & 7 - MAY REQUIRE MODIFICATION BY THE STUDENT
             // For task 5 (debugging), you should construct a IDebugFrame instance and
             // call the Break() method on the IDebugger instance stored in the debugger field
-            #endregion
+            int breakpoint = -1, count = 0;
+            bool available = !(this.debugger is null);
+
             foreach (IInstruction instruction in this.program)
 			{
+                if (available)
+                {
+                    if (breakpoint == -1 && this.Breakpoints.Count == 0)
+					{
+                        available = false;
+					}
+
+                    else
+					{
+                        if (breakpoint == -1)
+                        {
+                            breakpoint = this.Breakpoints.Dequeue();
+                        }
+
+                        if (breakpoint == count)
+						{
+                            this.RunBreak(instruction, count);
+						}
+					}
+                }
+
                 instruction.VirtualMachine = this;
                 instruction.Run();
-			}
+                ++ count;
+            }
+            #endregion
             #endregion
 
             long memUsed = System.Environment.WorkingSet;
@@ -223,6 +251,30 @@ namespace SVM
                                         "\r\n\r\nExecution finished in {0} milliseconds. Memory used = {1} bytes",
                                         elapsed.Milliseconds,
                                         memUsed));
+        }
+
+        private void RunBreak(IInstruction instruction, int count)
+        {
+            List<IInstruction> codeFrame = new List<IInstruction>();
+            int start = count - 4, end = count - 4;
+
+            if (count < 0)
+			{
+                start = 0;
+			}
+
+            if (end > this.program.Count)
+			{
+                end = this.program.Count;
+			}
+
+            for (int i = start; i < end; i ++)
+			{
+                codeFrame.Add(this.program[i]);
+			}
+
+            IDebugFrame debugFrame = new DebugFrame(instruction, codeFrame);
+            this.debugger.Break(debugFrame);
         }
 
         /// <summary>
@@ -234,6 +286,11 @@ namespace SVM
         private void ParseInstruction(string instruction, int lineNumber)
         {
             #region TASK 5 & 7 - MAY REQUIRE MODIFICATION BY THE STUDENT
+            if (instruction.StartsWith("* "))
+			{
+                this.Breakpoints.Enqueue(lineNumber);
+                instruction = instruction.Length == 2 ? String.Empty : instruction[2..];
+			}
             #endregion
 
             string[] tokens = null;

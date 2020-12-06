@@ -159,6 +159,11 @@ namespace SVM
             // For task 5 (debugging), you should construct a IDebugFrame instance and
             // call the Break() method on the IDebugger instance stored in the debugger field
             #endregion
+            foreach (IInstruction instruction in this.program)
+			{
+                instruction.VirtualMachine = this;
+                instruction.Run();
+			}
             #endregion
 
             long memUsed = System.Environment.WorkingSet;

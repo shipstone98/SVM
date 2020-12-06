@@ -1,4 +1,8 @@
-﻿using SVM.VirtualMachine.Debug;
+﻿using System.Linq;
+using System.Reflection;
+using System.Runtime.Loader;
+
+using SVM.VirtualMachine.Debug;
 
 namespace SVM
 {
@@ -38,6 +42,7 @@ namespace SVM
             #region Task 5 - Debugging 
             // Do something here to find and create an instance of a type which implements 
             // the IDebugger interface, and assign it to the debugger field
+            this.LoadDebugger();
             #endregion
         }
         #endregion
@@ -142,6 +147,52 @@ namespace SVM
                 throw;
             }
         }
+
+        private void LoadDebugger()
+		{
+            const String CONTEXT_NAME = "DebuggerReflection";
+            AssemblyLoadContext reflectionContext = new AssemblyLoadContext(CONTEXT_NAME, true);
+
+            foreach (String filename in Directory.EnumerateFiles(Environment.CurrentDirectory))
+			{
+                Assembly asm;
+
+                try
+				{
+                    asm = reflectionContext.LoadFromAssemblyPath(filename);
+				}
+
+                catch
+				{
+                    continue;
+				}
+
+                Type interfaceType = typeof (IDebugger);
+
+                foreach (Type type in JITCompiler.GetTypes(asm))
+				{
+                    try
+                    {
+                        if (type.GetInterfaces().Contains(interfaceType))
+                        {
+                            Assembly.LoadFrom(filename);
+
+                            try
+                            {
+                                this.debugger = (IDebugger) Activator.CreateInstance(type);
+                                this.debugger.VirtualMachine = this;
+                                reflectionContext.Unload();
+                                return;
+                            }
+
+                            catch { }
+                        }
+                    }
+
+                    catch { }
+				}
+			}
+		}
 
         /// <summary>
         /// Executes a compiled SML program 

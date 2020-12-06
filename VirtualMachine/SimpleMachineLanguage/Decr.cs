@@ -13,8 +13,8 @@
     {
         #region TASK 3 - TO BE IMPLEMENTED BY THE STUDENT
 		public override void Run()
-		{
-            int value = this.VirtualMachine.PopInt();
+        {
+            int value = this.PopInt();
 
             if (value == Int32.MinValue)
 			{

@@ -11,8 +11,8 @@
     {
         #region Constants
         protected const string BufferOverflowMessage = "A buffer overflow error has occurred. ( at [line {0}] {1})";
-        protected internal const string StackUnderflowMessage = "A stack underflow error has occurred. ( at [line {0}] {1})";
-        protected internal const string OperandOfWrongTypeMessage = "The operand on the stack is of the wrong type. (at [line {0}] {1} )";
+        protected const string StackUnderflowMessage = "A stack underflow error has occurred. ( at [line {0}] {1})";
+        protected const string OperandOfWrongTypeMessage = "The operand on the stack is of the wrong type. (at [line {0}] {1} )";
         protected const string VirtualMachineErrorMessage = "A virtual machine error has occurred.";
         #endregion
 
@@ -27,6 +27,33 @@
         #endregion
 
         #region Public methods
+        protected int PopInt()
+		{            
+            Object obj;
+
+            try
+			{
+                obj = this.VirtualMachine.Stack.Pop();
+			}
+
+            catch (InvalidOperationException)
+			{
+                throw new SvmRuntimeException(String.Format(BaseInstruction.StackUnderflowMessage,
+                                                    this.ToString(), this.VirtualMachine.ProgramCounter));
+			}
+
+            try
+			{
+                int value = (int) obj;
+                return value;
+			}
+
+            catch (InvalidCastException ex)
+			{
+                throw new SvmRuntimeException(String.Format(BaseInstruction.OperandOfWrongTypeMessage,
+                                                    this.ToString(), this.VirtualMachine.ProgramCounter));
+            }
+		}
         #endregion
 
         #region Non-public methods

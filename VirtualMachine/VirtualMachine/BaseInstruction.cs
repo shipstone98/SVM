@@ -10,8 +10,9 @@
     public abstract class BaseInstruction: IInstruction
     {
         #region Constants
-        protected const string StackUnderflowMessage = "A stack underflow error has occurred. ( at [line {0}] {1})";
-        protected const string OperandOfWrongTypeMessage = "The operand on the stack is of the wrong type. (at [line {0}] {1} )";
+        protected const string BufferOverflowMessage = "A buffer overflow error has occurred. ( at [line {0}] {1})";
+        protected internal const string StackUnderflowMessage = "A stack underflow error has occurred. ( at [line {0}] {1})";
+        protected internal const string OperandOfWrongTypeMessage = "The operand on the stack is of the wrong type. (at [line {0}] {1} )";
         protected const string VirtualMachineErrorMessage = "A virtual machine error has occurred.";
         #endregion
 

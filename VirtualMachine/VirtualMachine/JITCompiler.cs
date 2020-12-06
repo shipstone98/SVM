@@ -81,6 +81,25 @@ namespace SVM.VirtualMachine
             return instruction;
         }
 
+        internal static IEnumerable<Type> GetTypes(Assembly asm)
+        {
+            Type[] types;
+
+            try
+            {
+                types = asm.GetTypes();
+            }
+
+            catch (ReflectionTypeLoadException ex)
+            {
+                types = ex.Types;
+            }
+
+            List<Type> typeList = new List<Type>(types);
+            typeList.RemoveAll((t) => t is null);
+            return typeList;
+        }
+
         private static IInstruction GetInstruction(String opcode)
 		{
             if (!JITCompiler.AreDomainTypesScanned)
@@ -129,27 +148,10 @@ namespace SVM.VirtualMachine
 
         private static void ScanAssemblyForInstructions(Assembly asm)
 		{
-            Type[] types;
-
-            try
-			{
-                types = asm.GetTypes();
-			}
-
-            catch (ReflectionTypeLoadException ex)
-			{
-                types = ex.Types;
-			}
-
             Type instructionType = typeof (IInstruction);
 
-            foreach (Type type in types)
+            foreach (Type type in JITCompiler.GetTypes(asm))
 			{
-                if (type is null)
-				{
-                    continue;
-				}
-
                 if (type.GetInterfaces().Contains(instructionType))
 				{
                     if (!JITCompiler.ScannedInstructions.ContainsKey(type.Name))

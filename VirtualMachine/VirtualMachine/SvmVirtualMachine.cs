@@ -94,7 +94,33 @@ namespace SVM
         #endregion
 
         #region Public Methods
+        public int PopInt()
+		{
+            Object obj;
 
+            try
+			{
+                obj = this.Stack.Pop();
+			}
+
+            catch (InvalidOperationException)
+			{
+                throw new SvmRuntimeException(String.Format(BaseInstruction.StackUnderflowMessage,
+                                                    this.program[this.programCounter].ToString(), this.programCounter));
+			}
+
+            try
+			{
+                int value = (int) obj;
+                return value;
+			}
+
+            catch (InvalidCastException)
+			{
+                throw new SvmRuntimeException(String.Format(BaseInstruction.OperandOfWrongTypeMessage,
+                                                    this.program[this.programCounter], this.programCounter));
+            }
+		}
         #endregion
 
         #region Non-public Methods

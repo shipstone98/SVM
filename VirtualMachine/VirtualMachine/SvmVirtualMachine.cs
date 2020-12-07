@@ -203,7 +203,6 @@ namespace SVM
         /// <exception cref="SvmRuntimeException">
         /// If an unexpected error occurs during
         /// program execution
-        /// </exception>
         private void Run()
         {
             DateTime start = DateTime.Now;
@@ -216,31 +215,32 @@ namespace SVM
             bool available = !(this.debugger is null);
 
             foreach (IInstruction instruction in this.program)
-			{
+            {
                 if (available)
                 {
                     if (breakpoint == -1 && this.Breakpoints.Count == 0)
-					{
+                    {
                         available = false;
-					}
+                    }
 
                     else
-					{
+                    {
                         if (breakpoint == -1)
                         {
                             breakpoint = this.Breakpoints.Dequeue();
                         }
 
                         if (breakpoint == count)
-						{
+                        {
                             this.RunBreak(instruction, count);
-						}
-					}
+                            breakpoint = -1;
+                        }
+                    }
                 }
 
                 instruction.VirtualMachine = this;
                 instruction.Run();
-                ++ count;
+                ++count;
             }
             #endregion
             #endregion
@@ -256,22 +256,22 @@ namespace SVM
         private void RunBreak(IInstruction instruction, int count)
         {
             List<IInstruction> codeFrame = new List<IInstruction>();
-            int start = count - 4, end = count - 4;
+            int start = count - 4, end = count + 4;
 
-            if (count < 0)
-			{
+            if (start < 0)
+            {
                 start = 0;
-			}
+            }
 
             if (end > this.program.Count)
-			{
+            {
                 end = this.program.Count;
-			}
+            }
 
-            for (int i = start; i < end; i ++)
-			{
+            for (int i = start; i < end; i++)
+            {
                 codeFrame.Add(this.program[i]);
-			}
+            }
 
             IDebugFrame debugFrame = new DebugFrame(instruction, codeFrame);
             this.debugger.Break(debugFrame);

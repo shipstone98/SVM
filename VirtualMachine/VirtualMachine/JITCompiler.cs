@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Runtime.Loader;
 
 namespace SVM.VirtualMachine
 {
@@ -19,8 +20,10 @@ namespace SVM.VirtualMachine
 
         #region Fields
         private static bool AreDomainTypesScanned;
+        private static ICollection<String> LoadedAssemblies;
         private static IDictionary<String, IInstruction> LoadedInstructions;
         private static StringComparer OpcodeComparer;
+        private static ICollection<String> ScannedAssemblies;
 
         // Represents C# types matching SML instructions found using Reflection
         // Key is short type name, for opcode matching with OpcodeComparer
@@ -33,7 +36,9 @@ namespace SVM.VirtualMachine
         static JITCompiler()
 		{
             StringComparer opcodeComparer = StringComparer.InvariantCultureIgnoreCase;
+            JITCompiler.LoadedAssemblies = new HashSet<String>();
             JITCompiler.LoadedInstructions = new Dictionary<String, IInstruction>(opcodeComparer);
+            JITCompiler.ScannedAssemblies = new HashSet<String>();
             JITCompiler.ScannedInstructions = new Dictionary<String, KeyValuePair<String, String>>(opcodeComparer);
             JITCompiler.OpcodeComparer = opcodeComparer;
         }
@@ -105,6 +110,7 @@ namespace SVM.VirtualMachine
             if (!JITCompiler.AreDomainTypesScanned)
 			{
                 JITCompiler.ScanDomainTypes();
+                JITCompiler.ScanDirectoryTypes();
 			}
 
             try
@@ -138,7 +144,26 @@ namespace SVM.VirtualMachine
                 throw new SvmCompilationException();
 			}
 
-            Assembly asm = Assembly.Load(value.Key);
+            Assembly asm;
+
+            try
+            {
+                asm = Assembly.Load(value.Key);
+            }
+
+			catch
+			{
+                try
+                {
+                    asm = Assembly.LoadFrom(value.Key);
+                }
+
+                catch
+				{
+                    throw new SvmCompilationException($"The requested assembly {value.Key} could not be found or loaded.");
+				}
+			}
+
             Type type = asm.GetType(value.Value);
             IInstruction instruction = (IInstruction) Activator.CreateInstance(type);
             JITCompiler.LoadedInstructions.Add(opcode, instruction);
@@ -160,6 +185,40 @@ namespace SVM.VirtualMachine
 					}
 				}
 			}
+		}
+
+        private static void ScanDirectoryTypes()
+		{
+            const String CONTEXT_NAME = "Compiler Reflection Context";
+            AssemblyLoadContext reflectionContext = new AssemblyLoadContext(CONTEXT_NAME, true);
+
+            foreach (String filename in Directory.EnumerateFiles(Environment.CurrentDirectory))
+			{
+                Assembly asm;
+
+                try
+				{
+                    asm = reflectionContext.LoadFromAssemblyPath(filename);
+				}
+
+                catch
+				{
+                    continue;
+				}
+
+                Type instructionType = typeof (IInstruction);
+
+                foreach (Type type in JITCompiler.GetTypes(asm))
+				{
+                    if (type.GetInterfaces().Contains(instructionType))
+					{
+                        JITCompiler.ScannedAssemblies.Add(asm.FullName);
+                        JITCompiler.ScannedInstructions.Add(type.Name, new KeyValuePair<String, String>(filename, type.FullName));
+					}
+				}
+			}
+
+            reflectionContext.Unload();
 		}
 
         private static void ScanDomainTypes()

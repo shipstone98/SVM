@@ -41,9 +41,9 @@ namespace SVM
         #endregion
 
         #region Fields
-        private readonly Queue<int> Breakpoints;
+        private readonly Queue<int> _Breakpoints;
+        private readonly Dictionary<String, int> _Labels;
         private IDebugger debugger = null;
-        private readonly IDictionary<String, int> Labels;
         private List<IInstruction> program = new List<IInstruction>();
         private Stack stack = new Stack();
         private int programCounter = 0;
@@ -54,8 +54,8 @@ namespace SVM
         public SvmVirtualMachine()
         {
             #region Task 5 - Debugging 
-            this.Breakpoints = new Queue<int>();
-            this.Labels = new Dictionary<String, int>(JITCompiler.OpcodeComparer);
+            this._Breakpoints = new Queue<int>();
+            this._Labels = new Dictionary<String, int>(JITCompiler.OpcodeComparer);
 
             // Do something here to find and create an instance of a type which implements 
             // the IDebugger interface, and assign it to the debugger field
@@ -87,6 +87,8 @@ namespace SVM
         #endregion
 
         #region Properties
+        public IReadOnlyDictionary<String, int> Labels => this._Labels;
+
         /// <summary>
         ///  Gets a reference to the virtual machine stack.
         ///  This is used by executing instructions to retrieve
@@ -248,11 +250,13 @@ namespace SVM
             int breakpoint = -1;
             bool available = !(this.debugger is null);
 
-            foreach (IInstruction instruction in this.program)
+            while (this.programCounter < this.program.Count)
             {
+                IInstruction instruction = this.program[this.programCounter];
+
                 if (available)
                 {
-                    if (breakpoint == -1 && this.Breakpoints.Count == 0)
+                    if (breakpoint == -1 && this._Breakpoints.Count == 0)
                     {
                         available = false;
                     }
@@ -261,7 +265,7 @@ namespace SVM
                     {
                         if (breakpoint == -1)
                         {
-                            breakpoint = this.Breakpoints.Dequeue();
+                            breakpoint = this._Breakpoints.Dequeue();
                         }
 
                         if (breakpoint == this.programCounter)
@@ -313,7 +317,7 @@ namespace SVM
 
         private String ParseBreakpoint(String instruction, int lineNumber)
 		{
-            this.Breakpoints.Enqueue(lineNumber);
+            this._Breakpoints.Enqueue(lineNumber);
             return instruction[2..];
 		}
 
@@ -324,7 +328,7 @@ namespace SVM
 
             try
             {
-                this.Labels.Add(label, lineNumber);
+                this._Labels.Add(label, lineNumber);
             }
 
             catch (ArgumentException)

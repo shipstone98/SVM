@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 
 using SVM.VirtualMachine;
 
@@ -6,7 +8,8 @@ namespace SVM_Test
 {
 	internal class FakeVirtualMachine : IVirtualMachine
 	{
-		public int ProgramCounter => 0;
+		public IReadOnlyDictionary<String, int> Labels => throw new NotImplementedException();
+		public int ProgramCounter { get; set; }
 		public Stack Stack { get; }
 
 		internal FakeVirtualMachine() => this.Stack = new Stack();

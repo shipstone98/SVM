@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace SVM.VirtualMachine
 {
@@ -9,11 +10,17 @@ namespace SVM.VirtualMachine
 	public interface IVirtualMachine
 	{
 		/// <summary>
+		/// Gets a dictionary containing all labels in the code and the line they were encountered at.
+		/// </summary>
+		/// <value>A dictionary containing all labels in the code and the line they were encountered at.</value>
+		IReadOnlyDictionary<String, int> Labels { get; }
+
+		/// <summary>
 		/// Gets the line of the execution currently being executed.
 		/// </summary>
 		/// <value>The line of the execution currently being executed.</value>
 		/// <exception cref="InvalidOperationException">The code has not been compiled.</exception>
-		int ProgramCounter { get; }
+		int ProgramCounter { get; set; }
 
 		/// <summary>
 		/// Gets the non-generic stack used by the virtual machine instance.

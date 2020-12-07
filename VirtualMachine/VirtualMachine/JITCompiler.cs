@@ -22,7 +22,7 @@ namespace SVM.VirtualMachine
         private static bool AreDomainTypesScanned;
         private static ICollection<String> LoadedAssemblies;
         private static IDictionary<String, IInstruction> LoadedInstructions;
-        private static StringComparer OpcodeComparer;
+        internal static StringComparer OpcodeComparer;
         private static ICollection<String> ScannedAssemblies;
 
         // Represents C# types matching SML instructions found using Reflection

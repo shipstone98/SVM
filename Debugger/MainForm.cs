@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Text;
 using System.Windows.Forms;
 
 using SVM.VirtualMachine.Debug;
@@ -9,36 +8,63 @@ namespace Debugger
 {
 	public partial class MainForm : Form
 	{
-		private readonly Debugger Debugger;
+		private int _CodeSelection;
+		private readonly Debugger _Debugger;
 
-		public MainForm() => this.InitializeComponent();
-		public MainForm(Debugger debugger) : this() => this.Debugger = debugger;
+		public MainForm()
+		{
+			this.InitializeComponent();
+			this.ContinueButton.Focus();
+		}
+
+		public MainForm(Debugger debugger) : this() => this._Debugger = debugger;
 
 		internal void Break(IDebugFrame debugFrame)
 		{
 			this.SuspendLayout();
-			StringBuilder code = new StringBuilder(), stack = new StringBuilder();
 
-			foreach (IInstruction instruction in debugFrame.CodeFrame)
+			for (int i = 0; i < debugFrame.CodeFrame.Count; i ++)
 			{
-				code.AppendLine(instruction.ToString());
+				IInstruction instruction = debugFrame.CodeFrame[i];
+				this.CodeListBox.Items.Add(instruction.ToString());
+
+				if (Object.ReferenceEquals(instruction, debugFrame.CurrentInstruction))
+				{
+					this.CodeListBox.SelectedIndex = this._CodeSelection = i;
+				}
 			}
 
-			foreach (Object obj in this.Debugger.VirtualMachine.Stack)
+			if (this._Debugger._VirtualMachine.Stack.Count == 0)
 			{
-				stack.AppendLine(obj.ToString());
+				this.StackListBox.Items.Add("The stack is currently empty.");
 			}
 
-			this.CodeTextBox.Text = code.ToString();
-			this.StackTextBox.Text = stack.ToString();
+			else
+			{
+				foreach (Object obj in this._Debugger._VirtualMachine.Stack)
+				{
+					this.StackListBox.Items.Add(obj.ToString());
+				}
+			}
+
 			this.ContinueButton.Enabled = true;
 			this.ResumeLayout();
 		}
 
-		private void ContinueButton_Click(Object sender, EventArgs e)
+		private void Disable()
 		{
+			this.SuspendLayout();
 			this.ContinueButton.Enabled = false;
-			this.Debugger._AwaitingForm = false;
+			this.CodeListBox.Items.Clear();
+			this.StackListBox.Items.Clear();
+			this.ResumeLayout();
+			this._CodeSelection = 0;
+			this._Debugger._AwaitingForm = false;
 		}
+
+		private void ContinueButton_Click(Object sender, EventArgs e) => this.Disable();
+		private void MainForm_FormClosed(Object sender, FormClosedEventArgs e) => this.Disable();
+		private void CodeListBox_SelectedIndexChanged(Object sender, EventArgs e) => this.CodeListBox.SelectedIndex = this._CodeSelection;
+		private void StackListBox_SelectedIndexChanged(Object sender, EventArgs e) => this.StackListBox.SelectedIndex = -1;
 	}
 }

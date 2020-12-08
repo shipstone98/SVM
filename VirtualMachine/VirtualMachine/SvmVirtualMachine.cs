@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Runtime.Loader;
 
 using SVM.VirtualMachine.Debug;
@@ -53,6 +54,23 @@ namespace SVM
         #region Entry Point
         static void Main(string[] args)
         {
+            const int SW_HIDE = 0, SW_SHOW = 5;
+            IntPtr hWnd = SvmVirtualMachine.GetConsoleWindow();
+            bool shown = false;
+
+            if (hWnd == IntPtr.Zero)
+			{
+                if (!SvmVirtualMachine.AllocConsole())
+				{
+                    return;
+				}
+			}
+
+            else
+			{
+                shown = SvmVirtualMachine.ShowWindow(hWnd, SW_SHOW);
+			}
+
             if (CommandLineIsValid(args))
             {
                 SvmVirtualMachine vm = new SvmVirtualMachine();
@@ -69,7 +87,29 @@ namespace SVM
                     Console.WriteLine(RuntimeErrorMessage, err.Message);
                 }
             }
+
+            if (hWnd == IntPtr.Zero)
+			{
+                SvmVirtualMachine.FreeConsole();
+			}
+
+            else if (!shown)
+			{
+                SvmVirtualMachine.ShowWindow(hWnd, SW_HIDE);
+            }
         }
+
+        [DllImport("Kernel32.dll")]
+        private static extern bool AllocConsole();
+
+        [DllImport("Kernel32.dll")]
+        private static extern bool FreeConsole();
+
+        [DllImport("Kernel32.dll")]
+        private static extern IntPtr GetConsoleWindow();
+
+        [DllImport("Kernel32.dll")]
+        private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
         #endregion
 
         #region Properties

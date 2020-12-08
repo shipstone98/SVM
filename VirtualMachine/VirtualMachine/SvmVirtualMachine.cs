@@ -2,6 +2,7 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Loader;
+using System.Text.RegularExpressions;
 
 using SVM.VirtualMachine.Debug;
 
@@ -27,10 +28,22 @@ namespace SVM
         private const string InvalidOperandsMessage = "The instruction \r\n\r\n\t{0}\r\n\r\nis invalid because there are too many operands. An instruction may have no more than one operand.";
         private const string InvalidLabelMessage = "Invalid label: the label {0} at line {1} is not associated with an instruction.";
         private const string ProgramCounterMessage = "Program counter violation; the program counter value is out of range";
+
+        private const String BreakpointRegEx = "\\* ";
+        private const String InstructionRegEx = "[A-Za-z]+";
+        private const String LabelRegEx = "[%][A-Za-z][A-Za-z0-9]*[%] *";
+        private const String OperandRegEx = "( ([0-9]+|(\".*\"))){0,2}";
+
+        private const String BreakpointInstructionRegEx = SvmVirtualMachine.BreakpointRegEx + SvmVirtualMachine.InstructionOperandRegEx;
+        private const String BreakpointLabelInstructionRegEx = SvmVirtualMachine.BreakpointRegEx + SvmVirtualMachine.LabelRegEx + SvmVirtualMachine.InstructionOperandRegEx;
+        private const String InstructionOperandRegEx = SvmVirtualMachine.InstructionRegEx + SvmVirtualMachine.OperandRegEx;
+        private const String LabelInstructionRegEx = SvmVirtualMachine.LabelRegEx + SvmVirtualMachine.InstructionOperandRegEx;
+        private const String LabelBreakpointInstructionRegEx = SvmVirtualMachine.LabelRegEx + SvmVirtualMachine.BreakpointRegEx + SvmVirtualMachine.InstructionOperandRegEx;
         #endregion
 
         #region Fields
-        private readonly Queue<int> Breakpoints;
+        private readonly Queue<int> _Breakpoints;
+        private readonly Dictionary<String, int> _Labels;
         private IDebugger debugger = null;
         private List<IInstruction> program = new List<IInstruction>();
         private Stack stack = new Stack();
@@ -42,7 +55,8 @@ namespace SVM
         public SvmVirtualMachine()
         {
             #region Task 5 - Debugging 
-            this.Breakpoints = new Queue<int>();
+            this._Breakpoints = new Queue<int>();
+            this._Labels = new Dictionary<String, int>(JITCompiler.OpcodeComparer);
 
             // Do something here to find and create an instance of a type which implements 
             // the IDebugger interface, and assign it to the debugger field
@@ -113,6 +127,8 @@ namespace SVM
         #endregion
 
         #region Properties
+        public IReadOnlyDictionary<String, int> Labels => this._Labels;
+
         /// <summary>
         ///  Gets a reference to the virtual machine stack.
         ///  This is used by executing instructions to retrieve
@@ -137,6 +153,26 @@ namespace SVM
         {
             #region TASK 1 - TO BE IMPLEMENTED BY THE STUDENT
             get => this.programCounter;
+
+            set
+			{
+                if (value < 0)
+				{
+                    throw new ArgumentOutOfRangeException(nameof (value));
+				}
+
+                if (this.program is null)
+				{
+                    throw new InvalidOperationException();
+				}
+
+                if (value > this.program.Count)
+				{
+                    throw new ArgumentException(nameof (value));
+				}
+
+                this.programCounter = value;
+			}
             #endregion
         }
         #endregion
@@ -251,14 +287,16 @@ namespace SVM
             #region TASKS 5 & 7 - MAY REQUIRE MODIFICATION BY THE STUDENT
             // For task 5 (debugging), you should construct a IDebugFrame instance and
             // call the Break() method on the IDebugger instance stored in the debugger field
-            int breakpoint = -1, count = 0;
+            int breakpoint = -1;
             bool available = !(this.debugger is null);
 
-            foreach (IInstruction instruction in this.program)
+            while (this.programCounter < this.program.Count)
             {
+                IInstruction instruction = this.program[this.programCounter];
+
                 if (available)
                 {
-                    if (breakpoint == -1 && this.Breakpoints.Count == 0)
+                    if (breakpoint == -1 && this._Breakpoints.Count == 0)
                     {
                         available = false;
                     }
@@ -267,12 +305,12 @@ namespace SVM
                     {
                         if (breakpoint == -1)
                         {
-                            breakpoint = this.Breakpoints.Dequeue();
+                            breakpoint = this._Breakpoints.Dequeue();
                         }
 
-                        if (breakpoint == count)
+                        if (breakpoint == this.programCounter)
                         {
-                            this.RunBreak(instruction, count);
+                            this.RunBreak(instruction, this.programCounter);
                             breakpoint = -1;
                         }
                     }
@@ -280,7 +318,7 @@ namespace SVM
 
                 instruction.VirtualMachine = this;
                 instruction.Run();
-                ++count;
+                ++ this.programCounter;
             }
             #endregion
             #endregion
@@ -317,6 +355,30 @@ namespace SVM
             this.debugger.Break(debugFrame);
         }
 
+        private String ParseBreakpoint(String instruction, int lineNumber)
+		{
+            this._Breakpoints.Enqueue(lineNumber);
+            return instruction[2..];
+		}
+
+        private String ParseLabel(String instruction, int lineNumber)
+		{
+            int secondPercentage = instruction.IndexOf('%', 1);
+            String label = instruction[1..secondPercentage];
+
+            try
+            {
+                this._Labels.Add(label, lineNumber);
+            }
+
+            catch (ArgumentException)
+			{
+                throw new SvmCompilationException();
+			}
+
+            return instruction[(secondPercentage + 2)..];
+		}
+
         /// <summary>
         /// Parses a string from a .sml file containing a single
         /// SML instruction
@@ -326,10 +388,31 @@ namespace SVM
         private void ParseInstruction(string instruction, int lineNumber)
         {
             #region TASK 5 & 7 - MAY REQUIRE MODIFICATION BY THE STUDENT
-            if (instruction.StartsWith("* "))
+            if (Regex.IsMatch(instruction, SvmVirtualMachine.LabelBreakpointInstructionRegEx))
+            {
+                instruction = this.ParseLabel(instruction, lineNumber);
+                instruction = this.ParseBreakpoint(instruction, lineNumber);
+            }
+
+            else if (Regex.IsMatch(instruction, SvmVirtualMachine.BreakpointLabelInstructionRegEx))
+            {
+                instruction = this.ParseBreakpoint(instruction, lineNumber);
+                instruction = this.ParseLabel(instruction, lineNumber);
+            }
+
+            else if (Regex.IsMatch(instruction, SvmVirtualMachine.LabelInstructionRegEx))
+            {
+                instruction = this.ParseLabel(instruction, lineNumber);
+            }
+
+            else if (Regex.IsMatch(instruction, SvmVirtualMachine.BreakpointInstructionRegEx))
+            {
+                instruction = this.ParseBreakpoint(instruction, lineNumber);
+            }
+
+            else if (!Regex.IsMatch(instruction, SvmVirtualMachine.InstructionOperandRegEx))
 			{
-                this.Breakpoints.Enqueue(lineNumber);
-                instruction = instruction.Length == 2 ? String.Empty : instruction[2..];
+                throw new SvmCompilationException();
 			}
             #endregion
 

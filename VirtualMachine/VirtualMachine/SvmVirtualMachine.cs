@@ -122,7 +122,7 @@ namespace SVM
         [DllImport("Kernel32.dll")]
         private static extern IntPtr GetConsoleWindow();
 
-        [DllImport("Kernel32.dll")]
+        [DllImport("User32.dll")]
         private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
         #endregion
 

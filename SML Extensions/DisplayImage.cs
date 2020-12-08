@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Windows.Forms;
 
 using SVM.VirtualMachine;
 
@@ -27,7 +28,24 @@ namespace SML_Extensions
 				throw new SvmRuntimeException(err);
 			}
 
-			throw new NotImplementedException();
+			Application.EnableVisualStyles();
+			Application.SetCompatibleTextRenderingDefault(false);
+			ImageForm form;
+
+			try
+			{
+				form = new ImageForm(image);
+			}
+
+			catch (ArgumentException)
+			{
+				String err = String.Format(LoadImage.InvalidImageMessage, this.ToString(), this.VirtualMachine.ProgramCounter);
+				throw new SvmRuntimeException(err);
+			}
+
+			Application.Run(form);
+			image.Dispose();
+			image = null;
 			//Console.WriteLine($"Image file {image.FileName} contains raw data of length {image.RawData.Count}: {System.Text.Encoding.Default.GetString(image.ToArray())}");
 		}
 	}

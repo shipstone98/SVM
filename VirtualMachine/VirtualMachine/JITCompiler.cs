@@ -377,7 +377,7 @@ namespace SVM.VirtualMachine
             try
 			{
                 AssemblyName name = AssemblyName.GetAssemblyName(filename);
-                return !filename.EndsWith("SVM.dll");
+                return !filename.EndsWith("SVM.dll"); // Ensures not checking hash file for current assembly
 			}
 
             catch

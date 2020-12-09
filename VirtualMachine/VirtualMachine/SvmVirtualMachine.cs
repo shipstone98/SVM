@@ -329,6 +329,15 @@ namespace SVM
                                         "\r\n\r\nExecution finished in {0} milliseconds. Memory used = {1} bytes",
                                         elapsed.Milliseconds,
                                         memUsed));
+
+#if DEBUG
+            if (!Console.IsInputRedirected)
+            {
+                Console.WriteLine();
+                Console.WriteLine("Press any key to exit...");
+                Console.ReadKey(true);
+            }
+#endif
         }
 
         private void RunBreak(IInstruction instruction, int count)

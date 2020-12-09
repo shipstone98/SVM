@@ -48,7 +48,7 @@
                 return value;
 			}
 
-            catch (InvalidCastException ex)
+            catch (InvalidCastException)
 			{
                 throw new SvmRuntimeException(String.Format(BaseInstruction.OperandOfWrongTypeMessage,
                                                     this.ToString(), this.VirtualMachine.ProgramCounter));

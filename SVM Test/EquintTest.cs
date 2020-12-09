@@ -45,7 +45,7 @@ namespace SVM_Test
 		{
 			this._VirtualMachine.Stack.Push(EquintTest.Value + 1);
 			this._Instruction.Run();
-			Assert.AreNotEqual(this._VirtualMachine.ProgramCounter, this._VirtualMachine.Labels[EquintTest.Label] - 1);
+			Assert.AreEqual(0, this._VirtualMachine.ProgramCounter);
 		}
 
 		[TestMethod]

@@ -38,7 +38,7 @@ namespace SVM.SimpleMachineLanguage.Conditionals
 			this.VirtualMachine.Stack.Push(b);
 			this.VirtualMachine.Stack.Push(a);
 
-			if (!Object.Equals(a, b))
+			if (!Notequ.Equals(a, b))
 			{
 				int line;
 
@@ -53,6 +53,31 @@ namespace SVM.SimpleMachineLanguage.Conditionals
 				}
 
 				this.VirtualMachine.ProgramCounter = line - 1;
+			}
+		}
+
+		private new static bool Equals(Object a, Object b)
+		{
+			if (Object.Equals(a, b))
+			{
+				return true;
+			}
+
+			if (a is null || b is null)
+			{
+				return false;
+			}
+
+			Type aType = a.GetType(), bType = b.GetType(), intType = typeof (int), stringType = typeof (String);
+
+			if (aType.Equals(intType))
+			{
+				return !Int32.TryParse(b.ToString(), out int bValue) ? false : (int) a == bValue;
+			}
+
+			else
+			{
+				return !Int32.TryParse(a.ToString(), out int aValue) ? false : (int) b == aValue;
 			}
 		}
 	}

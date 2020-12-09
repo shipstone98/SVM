@@ -412,7 +412,7 @@ namespace SVM.VirtualMachine
                 computedHash = computedHash.TrimEnd('-');
                 computedHash = computedHash.ToUpper();
                 hash = hash.ToUpper();
-                return computedHash.Equals(hash);
+                return computedHash.Equals(hash) || computedHash.Replace("-", String.Empty).Equals(hash);
 			}
 
             catch (Exception innerEx)

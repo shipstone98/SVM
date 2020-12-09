@@ -1,0 +1,14 @@
+﻿{
+  "assemblyHashes": [
+    {
+      "Debugger.dll": {
+        "algorithm": "sha256",
+        "hash": "FE-D8-60-50-BB-89-8A-3A-6E-ED-F2-16-50-44-B4-C6-FB-C3-F1-80-0F-B6-5E-0F-32-2F-E3-6E-10-7E-98-7E"
+      },
+      "SML Extensions.dll": {
+        "algorithm": "sha256",
+        "hash": "AA-80-FD-9C-CB-F5-82-0C-86-06-89-70-7A-CF-FC-B0-81-09-CC-CA-C5-C2-15-1D-C9-28-EA-31-8C-8E-5A-35"
+      }
+    }
+  ]
+}

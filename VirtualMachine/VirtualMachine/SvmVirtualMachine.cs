@@ -87,9 +87,9 @@ namespace SVM
 
             if (CommandLineIsValid(args))
             {
-                SvmVirtualMachine vm = new SvmVirtualMachine();
                 try
                 {
+                    SvmVirtualMachine vm = new SvmVirtualMachine();
                     vm.Compile(args[0]);
                     vm.Run();
                 }
@@ -100,7 +100,21 @@ namespace SVM
                 {
                     Console.WriteLine(RuntimeErrorMessage, err.Message);
                 }
+
+                catch (InvalidHashException ex)
+				{
+                    Console.WriteLine("ERROR: couldn't validate hash for file " + ex.FileName);
+				}
             }
+
+#if DEBUG
+            if (!Console.IsInputRedirected)
+            {
+                Console.WriteLine();
+                Console.WriteLine("Press any key to exit...");
+                Console.ReadKey(true);
+            }
+#endif
 
             if (hWnd == IntPtr.Zero)
 			{
@@ -234,6 +248,16 @@ namespace SVM
 
             foreach (String filename in Directory.EnumerateFiles(Environment.CurrentDirectory))
 			{
+                if (!JITCompiler.IsFileAssembly(filename))
+				{
+                    continue;
+				}
+
+                if (!JITCompiler.VerifyHash(filename, out Exception ex))
+				{
+                    throw new InvalidHashException(filename);
+				}
+
                 Assembly asm;
 
                 try
@@ -329,15 +353,6 @@ namespace SVM
                                         "\r\n\r\nExecution finished in {0} milliseconds. Memory used = {1} bytes",
                                         elapsed.Milliseconds,
                                         memUsed));
-
-#if DEBUG
-            if (!Console.IsInputRedirected)
-            {
-                Console.WriteLine();
-                Console.WriteLine("Press any key to exit...");
-                Console.ReadKey(true);
-            }
-#endif
         }
 
         private void RunBreak(IInstruction instruction, int count)

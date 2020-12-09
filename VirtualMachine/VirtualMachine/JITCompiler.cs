@@ -1,5 +1,8 @@
 ﻿using System.Linq;
 using System.Runtime.Loader;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 
 namespace SVM.VirtualMachine
 {
@@ -20,6 +23,8 @@ namespace SVM.VirtualMachine
 
         #region Fields
         private static bool AreDomainTypesScanned;
+        private static bool AreHashesRead;
+        private static IDictionary<String, KeyValuePair<String, String>> Hashes;
         private static ICollection<String> LoadedAssemblies;
         private static IDictionary<String, IInstruction> LoadedInstructions;
         internal static StringComparer OpcodeComparer;
@@ -36,6 +41,7 @@ namespace SVM.VirtualMachine
         static JITCompiler()
 		{
             StringComparer opcodeComparer = StringComparer.InvariantCultureIgnoreCase;
+            JITCompiler.Hashes = new Dictionary<String, KeyValuePair<String, String>>();
             JITCompiler.LoadedAssemblies = new HashSet<String>();
             JITCompiler.LoadedInstructions = new Dictionary<String, IInstruction>(opcodeComparer);
             JITCompiler.ScannedAssemblies = new HashSet<String>();
@@ -103,6 +109,131 @@ namespace SVM.VirtualMachine
             List<Type> typeList = new List<Type>(types);
             typeList.RemoveAll((t) => t is null);
             return typeList;
+        }
+
+        private static String GetHash(String filename, out HashAlgorithm algorithm)
+		{
+            if (!JITCompiler.AreHashesRead)
+			{
+                JITCompiler.ReadHashes();
+			}
+
+            if (!JITCompiler.Hashes.ContainsKey(filename))
+            {
+                algorithm = null;
+                return null;
+			}
+
+            KeyValuePair<String, String> hashInfo = JITCompiler.Hashes[filename];
+
+            switch (hashInfo.Key.ToLower())
+            {
+                case "md5":
+                    algorithm = new MD5CryptoServiceProvider();
+                    break;
+                case "sha1":
+                    algorithm = new SHA1CryptoServiceProvider();
+                    break;
+                case "sha256":
+                    algorithm = new SHA256CryptoServiceProvider();
+                    break;
+                case "sha384":
+                    algorithm = new SHA384CryptoServiceProvider();
+                    break;
+                case "sha512":
+                    algorithm = new SHA512CryptoServiceProvider();
+                    break;
+                default:
+                    algorithm = null;
+                    return null;
+            }
+
+            return hashInfo.Value;
+		}
+
+        private static bool IsAlgorithmValid(String algorithm)
+		{
+            if (algorithm is null)
+			{
+                return false;
+			}
+
+            switch (algorithm.ToLower())
+			{
+                case "sha1":
+                case "sha256":
+                case "md5":
+                    return true;
+                default:
+                    return false;
+			}
+		}
+
+        private static bool IsHashValid(String hash)
+		{
+            if (hash is null)
+			{
+                return false;
+			}                
+
+            foreach (char c in hash)
+			{
+                if (!(Char.IsDigit(c) || Char.IsLower(c) && c >= 'a' && c <= 'f' || Char.IsUpper(c) && c >= 'A' && c <= 'F' || c == '-'))
+				{
+                    return false;
+				}
+			}
+
+            return true;
+		}
+
+        private static void ReadHashes()
+        {
+            String hashJson = File.ReadAllText("assemblyHash.json");
+
+            using (JsonDocument document = JsonDocument.Parse(hashJson))
+            {
+                foreach (JsonProperty property in document.RootElement.EnumerateObject())
+                {
+                    if (property.Name.ToLower().Equals("assemblyhashes"))
+                    {
+                        foreach (JsonElement item in property.Value.EnumerateArray())
+                        {
+                            foreach (JsonProperty fileInfo in item.EnumerateObject())
+							{
+                                try
+                                {
+                                    String algorithm = null, hash = null;
+
+                                    foreach (JsonProperty fileHashInfo in fileInfo.Value.EnumerateObject())
+                                    {
+                                        String name = fileHashInfo.Name.ToLower();
+
+                                        if (name.Equals("algorithm"))
+                                        {
+                                            algorithm = fileHashInfo.Value.GetString();
+                                        }
+
+                                        else if (name.Equals("hash"))
+                                        {
+                                            hash = fileHashInfo.Value.GetString();
+                                        }
+                                    }
+
+                                    if (!JITCompiler.Hashes.ContainsKey(fileInfo.Name) && JITCompiler.IsAlgorithmValid(algorithm) && JITCompiler.IsHashValid(hash))
+									{
+                                        String name = fileInfo.Name.StartsWith(Environment.CurrentDirectory) ? fileInfo.Name : Environment.CurrentDirectory + Path.DirectorySeparatorChar + fileInfo.Name;
+                                        KeyValuePair<String, String> hashInfo = new KeyValuePair<String, String>(algorithm, hash);
+                                        JITCompiler.Hashes.Add(name, hashInfo);
+									}
+                                }
+
+                                catch (Exception ex) { }
+							}
+                        }
+                    }
+                }
+            }
         }
 
         private static IInstruction GetInstruction(String opcode)
@@ -193,7 +324,17 @@ namespace SVM.VirtualMachine
             AssemblyLoadContext reflectionContext = new AssemblyLoadContext(CONTEXT_NAME, true);
 
             foreach (String filename in Directory.EnumerateFiles(Environment.CurrentDirectory))
-			{
+            {
+                if (!JITCompiler.IsFileAssembly(filename))
+                {
+                    continue;
+                }
+
+                if (!JITCompiler.VerifyHash(filename, out Exception ex))
+                {
+                    throw new InvalidHashException(filename);
+                }
+
                 Assembly asm;
 
                 try
@@ -229,6 +370,56 @@ namespace SVM.VirtualMachine
 			}
 
             JITCompiler.AreDomainTypesScanned = true;
+		}
+
+        internal static bool IsFileAssembly(String filename)
+		{
+            try
+			{
+                AssemblyName name = AssemblyName.GetAssemblyName(filename);
+                return !filename.EndsWith("SVM.dll");
+			}
+
+            catch
+			{
+                return false;
+			}
+		}
+
+        internal static bool VerifyHash(String filename, out Exception ex)
+		{
+            try
+			{
+                ex = null;
+                String hash = JITCompiler.GetHash(filename, out HashAlgorithm hashAlgorithm);
+
+                if (hash is null)
+				{
+                    return false;
+				}
+
+                byte[] bytes = File.ReadAllBytes(filename);
+                byte[] hashedBytes = hashAlgorithm.ComputeHash(bytes);
+                StringBuilder sb = new StringBuilder();
+
+                foreach (byte b in hashedBytes)
+				{
+                    sb.AppendFormat("{0:X2}", b);
+                    sb.Append('-');
+				}
+
+                String computedHash = sb.ToString();
+                computedHash = computedHash.TrimEnd('-');
+                computedHash = computedHash.ToUpper();
+                hash = hash.ToUpper();
+                return computedHash.Equals(hash);
+			}
+
+            catch (Exception innerEx)
+			{
+                ex = innerEx;
+                return false;
+			}
 		}
         #endregion
 

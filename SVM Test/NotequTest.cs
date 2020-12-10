@@ -21,7 +21,7 @@ namespace SVM_Test
 		static NotequTest()
 		{
 			NotequTest._Labels = new Dictionary<String, int>();
-			NotequTest._Labels.Add(NotequTest.Label, -1);
+			NotequTest._Labels.Add(NotequTest.Label, NotequTest.Value);
 		}
 
 		[TestInitialize]

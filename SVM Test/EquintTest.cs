@@ -21,7 +21,7 @@ namespace SVM_Test
 		static EquintTest()
 		{
 			EquintTest._Labels = new Dictionary<String, int>();
-			EquintTest._Labels.Add(EquintTest.Label, -1);
+			EquintTest._Labels.Add(EquintTest.Label, EquintTest.Value);
 		}
 
 		[TestInitialize]

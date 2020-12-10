@@ -227,12 +227,14 @@ namespace SVM.VirtualMachine
 									}
                                 }
 
-                                catch (Exception ex) { }
+                                catch { }
 							}
                         }
                     }
                 }
             }
+
+            JITCompiler.AreHashesRead = true;
         }
 
         private static IInstruction GetInstruction(String opcode)

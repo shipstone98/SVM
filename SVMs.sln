@@ -9,7 +9,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SML Extensions", "SML Exten
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Debugger", "Debugger\Debugger.csproj", "{2FDBDE0A-5E27-441F-96C9-76E01FCC5E64}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SVM Test", "SVM Test\SVM Test.csproj", "{7D2AD085-FC01-48BA-B29B-E3135929E944}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SVM Test", "SVM Test\SVM Test.csproj", "{7D2AD085-FC01-48BA-B29B-E3135929E944}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5713B77E-77EF-469E-970E-0A1D5273628D}"
+	ProjectSection(SolutionItems) = preProject
+		SVM.snk = SVM.snk
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

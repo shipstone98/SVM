@@ -28,6 +28,7 @@ namespace SVM_Test
 			}
 		}
 
+		public void Jump() => throw new NotImplementedException();
 		public int PopInt() => (int) this.Stack.Pop();
 	}
 }

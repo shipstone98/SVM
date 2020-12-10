@@ -31,7 +31,7 @@ namespace SVM
 
         private const String BreakpointRegEx = "\\* ";
         private const String InstructionRegEx = "[A-Za-z]+";
-        private const String LabelRegEx = "[%][A-Za-z][A-Za-z0-9]*[%] *";
+        private const String LabelRegEx = "[%].*[%] *";
         private const String OperandRegEx = "( ([0-9]+|(\".*\"))){0,2}";
 
         private const String BreakpointInstructionRegEx = SvmVirtualMachine.BreakpointRegEx + SvmVirtualMachine.InstructionOperandRegEx;
@@ -142,8 +142,6 @@ namespace SVM
         #endregion
 
         #region Properties
-        public IReadOnlyDictionary<String, int> Labels => this._Labels;
-
         /// <summary>
         ///  Gets a reference to the virtual machine stack.
         ///  This is used by executing instructions to retrieve
@@ -193,6 +191,19 @@ namespace SVM
         #endregion
 
         #region Public Methods
+        public void Jump(String label)
+		{
+            try
+			{
+                this.programCounter = this._Labels[label] - 1;
+			}
+
+            catch
+			{
+                throw new SvmRuntimeException();
+			}
+		}
+
         public int PopInt() => (int) this.Stack.Pop();
         #endregion
 

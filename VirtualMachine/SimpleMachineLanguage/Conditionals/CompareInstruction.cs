@@ -36,19 +36,15 @@ namespace SVM.SimpleMachineLanguage.Conditionals
 
 			if (compar(value, operandValue))
 			{
-				int line;
-
 				try
 				{
-					line = this.VirtualMachine.Labels[this.Operands[1]];
+					this.VirtualMachine.Jump(this.Operands[1]);
 				}
 
 				catch
 				{
 					throw new SvmRuntimeException();
 				}
-
-				this.VirtualMachine.ProgramCounter = line - 1;
 			}
 		}
 	}

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
 
 namespace SVM.VirtualMachine
 {
@@ -10,23 +9,24 @@ namespace SVM.VirtualMachine
 	public interface IVirtualMachine
 	{
 		/// <summary>
-		/// Gets a dictionary containing all labels in the code and the line they were encountered at.
-		/// </summary>
-		/// <value>A dictionary containing all labels in the code and the line they were encountered at.</value>
-		IReadOnlyDictionary<String, int> Labels { get; }
-
-		/// <summary>
 		/// Gets the line of the execution currently being executed.
 		/// </summary>
 		/// <value>The line of the execution currently being executed.</value>
 		/// <exception cref="InvalidOperationException">The code has not been compiled.</exception>
-		int ProgramCounter { get; set; }
+		int ProgramCounter { get; }
 
 		/// <summary>
 		/// Gets the non-generic stack used by the virtual machine instance.
 		/// </summary>
 		/// <value>The non-generic stack used by the virtual machine instance.</value>
 		Stack Stack { get; }
+
+		/// <summary>
+		/// Instruct the <see cref="IVirtualMachine"/> to jump to the specified <c><paramref name="label"/></c>.
+		/// </summary>
+		/// <param name="label">The label to jump to.</param>
+		/// <exception cref="SvmRuntimeException">The specified label could not be found.</exception>
+		void Jump(String label);
 
 		/// <summary>
 		/// Pops an integer from the top of the <see cref="IVirtualMachine.Stack"/>.

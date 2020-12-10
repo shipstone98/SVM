@@ -370,7 +370,7 @@ namespace SVM
         private void RunBreak(IInstruction instruction, int count)
         {
             List<IInstruction> codeFrame = new List<IInstruction>();
-            int start = count - 4, end = count + 4;
+            int start = count - 4, end = count + 5;
 
             if (start < 0)
             {

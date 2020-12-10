@@ -25,9 +25,11 @@ namespace SVM.VirtualMachine
         private static bool AreDomainTypesScanned;
         private static bool AreHashesRead;
         private static IDictionary<String, KeyValuePair<String, String>> Hashes;
+        private static bool IsPublicKeyRead;
         private static ICollection<String> LoadedAssemblies;
         private static IDictionary<String, IInstruction> LoadedInstructions;
         internal static StringComparer OpcodeComparer;
+        private static StrongNameKeyPair PublicKey;
         private static ICollection<String> ScannedAssemblies;
 
         // Represents C# types matching SML instructions found using Reflection
@@ -331,7 +333,7 @@ namespace SVM.VirtualMachine
                     continue;
                 }
 
-                if (!JITCompiler.VerifyHash(filename, out Exception ex))
+                if (!JITCompiler.VerifyAssembly(filename))
                 {
                     throw new InvalidHashException(filename);
                 }
@@ -387,7 +389,53 @@ namespace SVM.VirtualMachine
 			}
 		}
 
-        internal static bool VerifyHash(String filename, out Exception ex)
+        internal static bool VerifyAssembly(String filename) => JITCompiler.VerifyHash(filename, out Exception ex) && JITCompiler.VerifyStrongName(filename);
+
+        private static bool VerifyStrongName(String filename)
+		{
+            return true; // Can't do anything until John replies with replacement
+
+            try
+			{
+                AssemblyName asmName = AssemblyName.GetAssemblyName(filename);
+                byte[] asmPublicKey = asmName.GetPublicKey();
+                byte[] publicKey = JITCompiler.GetPublicKey().PublicKey;
+
+                if (asmPublicKey.Length != publicKey.Length)
+				{
+                    return false;
+				}
+
+                for (int i = 0; i < publicKey.Length; i ++)
+				{
+                    if (publicKey[i] != asmPublicKey[i])
+					{
+                        return false;
+					}
+				}
+
+                return true;
+			}
+
+            catch (Exception ex)
+			{
+                return false;
+			}
+		}
+
+        private static StrongNameKeyPair GetPublicKey()
+		{
+            if (!JITCompiler.IsPublicKeyRead)
+			{
+                byte[] bytes = File.ReadAllBytes("SVM.snk");
+                JITCompiler.PublicKey = new StrongNameKeyPair(bytes);
+                JITCompiler.IsPublicKeyRead = true;
+			}
+
+            return JITCompiler.PublicKey;
+		}
+
+        private static bool VerifyHash(String filename, out Exception ex)
 		{
             try
 			{

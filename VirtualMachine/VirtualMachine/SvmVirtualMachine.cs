@@ -265,7 +265,7 @@ namespace SVM
                     continue;
 				}
 
-                if (!JITCompiler.VerifyHash(filename, out Exception ex))
+                if (!JITCompiler.VerifyAssembly(filename))
 				{
                     throw new InvalidHashException(filename);
 				}

@@ -3,11 +3,11 @@
     {
       "Debugger.dll": {
         "algorithm": "sha256",
-        "hash": "FE-D8-60-50-BB-89-8A-3A-6E-ED-F2-16-50-44-B4-C6-FB-C3-F1-80-0F-B6-5E-0F-32-2F-E3-6E-10-7E-98-7E"
+        "hash": "41-E4-E5-1C-9E-C5-80-41-2D-36-16-D9-A4-68-67-2F-09-4F-6C-D2-B3-E2-97-9D-B5-91-0A-72-ED-67-BF-B2"
       },
       "SML Extensions.dll": {
         "algorithm": "sha256",
-        "hash": "AA-80-FD-9C-CB-F5-82-0C-86-06-89-70-7A-CF-FC-B0-81-09-CC-CA-C5-C2-15-1D-C9-28-EA-31-8C-8E-5A-35"
+        "hash": "A3-0A-D6-E4-7D-A3-E8-E1-AB-36-59-77-0E-D9-DC-0E-D2-7C-E7-D9-2F-34-EC-BB-01-C1-A4-1E-9D-D0-69-6C"
       }
     }
   ]

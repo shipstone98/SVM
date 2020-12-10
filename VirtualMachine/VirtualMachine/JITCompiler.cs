@@ -144,8 +144,7 @@ namespace SVM.VirtualMachine
                     algorithm = new SHA512CryptoServiceProvider();
                     break;
                 default:
-                    algorithm = null;
-                    return null;
+                    throw new InvalidHashException(filename);
             }
 
             return hashInfo.Value;

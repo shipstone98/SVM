@@ -104,6 +104,7 @@ namespace SVM
                 catch (InvalidHashException ex)
 				{
                     Console.WriteLine("ERROR: couldn't validate hash for file " + ex.FileName);
+                    Console.WriteLine("This may be due to a bad hash, or an unsupported hashing algorithm");
 				}
             }
 

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -21,10 +21,14 @@
 
   <ItemGroup>
     <None Remove="assemblyHash.json" />
+    <None Remove="SVM.snk" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="assemblyHash.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="SVM.snk">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

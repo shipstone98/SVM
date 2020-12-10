@@ -49,7 +49,7 @@ namespace SVM_Test
 			this._VirtualMachine.Stack.Push(N);
 			this._VirtualMachine.Stack.Push(N + 1);
 			this._Instruction.Run();
-			Assert.AreEqual(this._VirtualMachine.ProgramCounter, this._VirtualMachine.Labels[NotequTest.Label] - 1); // As IVM.Run increments program counter every instruction, must subtract one from label in Notequ.Run
+			Assert.AreEqual(NotequTest.Value, this._VirtualMachine.ProgramCounter); // As IVM.Run increments program counter every instruction, must subtract one from label in Notequ.Run
 		}
 
 		[TestMethod]
@@ -69,7 +69,7 @@ namespace SVM_Test
 			this._VirtualMachine.Stack.Push(N);
 			this._VirtualMachine.Stack.Push((N + 1).ToString());
 			this._Instruction.Run();
-			Assert.AreEqual(this._VirtualMachine.ProgramCounter, this._VirtualMachine.Labels[NotequTest.Label] - 1); // As IVM.Run increments program counter every instruction, must subtract one from label in Notequ.Run
+			Assert.AreEqual(NotequTest.Value, this._VirtualMachine.ProgramCounter); // As IVM.Run increments program counter every instruction, must subtract one from label in Notequ.Run
 		}
 
 		[TestMethod]

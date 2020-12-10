@@ -37,7 +37,7 @@ namespace SVM_Test
 		{
 			this._VirtualMachine.Stack.Push(EquintTest.Value);
 			this._Instruction.Run();
-			Assert.AreEqual(this._VirtualMachine.ProgramCounter, this._VirtualMachine.Labels[EquintTest.Label] - 1); // As IVM.Run increments program counter every instruction, must subtract one from label in Equint.Run
+			Assert.AreEqual(EquintTest.Value, this._VirtualMachine.ProgramCounter); // As IVM.Run increments program counter every instruction, must subtract one from label in Equint.Run
 		}
 
 		[TestMethod]

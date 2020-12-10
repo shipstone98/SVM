@@ -10,8 +10,7 @@ namespace SVM_Test
 	{
 		private readonly Dictionary<String, int> _Labels;
 
-		public IReadOnlyDictionary<String, int> Labels => this._Labels;
-		public int ProgramCounter { get; set; }
+		public int ProgramCounter { get; private set; }
 		public Stack Stack { get; }
 
 		internal FakeVirtualMachine()
@@ -20,7 +19,7 @@ namespace SVM_Test
 			this.Stack = new Stack();
 		}
 
-		internal FakeVirtualMachine(IDictionary<String, int> labels) : this()
+		internal FakeVirtualMachine(IEnumerable<KeyValuePair<String, int>> labels) : this()
 		{
 			foreach (KeyValuePair<String, int> label in labels)
 			{
@@ -28,7 +27,7 @@ namespace SVM_Test
 			}
 		}
 
-		public void Jump() => throw new NotImplementedException();
+		public void Jump(String label) => this.ProgramCounter = this._Labels[label];
 		public int PopInt() => (int) this.Stack.Pop();
 	}
 }
